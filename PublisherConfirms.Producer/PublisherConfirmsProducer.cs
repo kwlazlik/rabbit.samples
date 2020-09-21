@@ -70,13 +70,13 @@ namespace RabbitSamples.PublisherConfirms.Producer
             }
          }
 
-         channel.BasicAcks += (sender, ea) => CleanOutstandingConfirms(ea.DeliveryTag, ea.Multiple);
+         channel.BasicAcks += (sender, message) => CleanOutstandingConfirms(message.DeliveryTag, message.Multiple);
 
-         channel.BasicNacks += (sender, ea) =>
+         channel.BasicNacks += (sender, message) =>
          {
-            outstandingConfirms.TryGetValue(ea.DeliveryTag, out string body);
-            Console.WriteLine($"Message with body {body} has been nack-ed. Sequence number: {ea.DeliveryTag}, multiple: {ea.Multiple}");
-            CleanOutstandingConfirms(ea.DeliveryTag, ea.Multiple);
+            outstandingConfirms.TryGetValue(message.DeliveryTag, out string body);
+            Console.WriteLine($"Message with body {body} has been nack-ed. Sequence number: {message.DeliveryTag}, multiple: {message.Multiple}");
+            CleanOutstandingConfirms(message.DeliveryTag, message.Multiple);
          };
 
          byte[] messageBody = GetMessageBody(MessageSizeMb);

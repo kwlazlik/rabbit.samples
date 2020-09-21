@@ -28,9 +28,9 @@ namespace RabbitSamples.DeadLetters.Producer
                { "x-dead-letter-exchange", "dl-exchange" }
             });
 
-         channel.QueueBind(queue: "task-queue", exchange: "task-exchange", routingKey: "task-rk");
+         channel.QueueBind(queue: "task-queue", exchange: "task-exchange", routingKey: "valid-rk");
 
-         channel.ExchangeDeclare("dl-exchange", type: "fanout", durable: false, autoDelete: false, arguments: null);
+         channel.ExchangeDeclare("dl-exchange", type: ExchangeType.Fanout, durable: false, autoDelete: false, arguments: null);
 
          channel.QueueDeclare("dl-queue", durable: false, exclusive: false, autoDelete: false, arguments: null);
 
@@ -38,12 +38,12 @@ namespace RabbitSamples.DeadLetters.Producer
 
          while (true)
          {
-            (string message, string key) = PickMessageAndKey();
-            byte[] body = Encoding.UTF8.GetBytes(message);
+            (string messageText, string key) = PickMessageAndKey();
+            byte[] body = Encoding.UTF8.GetBytes(messageText);
 
             channel.BasicPublish(exchange: "task-exchange", routingKey: key, basicProperties: null, body: body);
 
-            Console.WriteLine("--- Message sent: {0}", message);
+            Console.WriteLine("--- Message sent: {0}", messageText);
 
             await Task.Delay(3000);
          }
@@ -76,9 +76,9 @@ namespace RabbitSamples.DeadLetters.Producer
          };
 
          string key = Random.Next() % 4 == 0 ? "invalid-key" : "valid-key";
-         string message = $"{colors.Pick()} {taste.Pick()} {vegetables.Pick()} {key} {DateTime.Now:HH:mm:ss.fff}";
+         string messageText = $"{colors.Pick()} {taste.Pick()} {vegetables.Pick()} {key} {DateTime.Now:HH:mm:ss.fff}";
 
-         return (message, key);
+         return (messageText, key);
       }
    }
 }

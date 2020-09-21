@@ -22,16 +22,16 @@ namespace RabbitSamples.Topic.Consumer
 
          channel.QueueBind(queue: queueName, exchange: "sample-topic-exchange", routingKey: key);
 
-         Console.WriteLine($"--- Waiting for messages matches: {key}");
+         Console.WriteLine($"--- Waiting for messages: {key}");
 
          EventingBasicConsumer consumer = new EventingBasicConsumer(channel);
-         consumer.Received += (model, ea) =>
+         consumer.Received += (model, message) =>
          {
-            ReadOnlyMemory<byte> body = ea.Body;
-            string message = Encoding.UTF8.GetString(body.Span);
-            string routingKey = ea.RoutingKey;
+            ReadOnlyMemory<byte> body = message.Body;
+            string messageText = Encoding.UTF8.GetString(body.Span);
+            string routingKey = message.RoutingKey;
 
-            Console.WriteLine($"--- Message received: '{routingKey}':'{message}'");
+            Console.WriteLine($"--- Message received: 'key:{routingKey}' text:'{messageText}'");
          };
 
          channel.BasicConsume(queue: queueName, autoAck: true, consumer: consumer);

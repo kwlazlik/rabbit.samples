@@ -37,32 +37,32 @@ namespace RabbitSamples.DeadLetters.Consumer
          channel.QueueBind(queue: "dl-queue", exchange: "dl-exchange", routingKey: "");
 
          EventingBasicConsumer consumer = new EventingBasicConsumer(channel);
-         consumer.Received += (model, ea) =>
+         consumer.Received += (model, message) =>
          {
-            ReadOnlyMemory<byte> body = ea.Body;
-            string message = Encoding.UTF8.GetString(body.Span);
+            ReadOnlyMemory<byte> body = message.Body;
+            string messageText = Encoding.UTF8.GetString(body.Span);
 
             if (Random.Next() % 10 == 0)
             {
-               channel.BasicNack(ea.DeliveryTag, false, false);
-               Console.WriteLine($"--- Message rejected: {message} {ea.RoutingKey}");
+               channel.BasicNack(message.DeliveryTag, false, false);
+               Console.WriteLine($"--- Message rejected: {messageText} {message.RoutingKey}");
             }
             else
             {
-               channel.BasicAck(ea.DeliveryTag, false);
-               Console.WriteLine($"--- Message received: {message} {ea.RoutingKey}");
+               channel.BasicAck(message.DeliveryTag, false);
+               Console.WriteLine($"--- Message received: {messageText} {message.RoutingKey}");
             }
          };
 
          channel.BasicConsume(queue: "task-queue", autoAck: false, consumer: consumer);
 
          EventingBasicConsumer dlConsumer = new EventingBasicConsumer(channel);
-         dlConsumer.Received += (model, ea) =>
+         dlConsumer.Received += (model, message) =>
          {
-            ReadOnlyMemory<byte> body = ea.Body;
-            string message = Encoding.UTF8.GetString(body.Span);
+            ReadOnlyMemory<byte> body = message.Body;
+            string messageText = Encoding.UTF8.GetString(body.Span);
 
-            Console.WriteLine($"--- Dead Letter Message received: {message} {ea.RoutingKey}");
+            Console.WriteLine($"--- Dead Letter Message received: {messageText} {message.RoutingKey}");
          };
 
          channel.BasicConsume(queue: "dl-queue", autoAck: false, consumer: dlConsumer);

@@ -17,7 +17,7 @@ namespace RabbitSamples.Ack.Consumer
 
          using IModel channel = connection.CreateModel();
 
-         channel.QueueDeclare(queue: "durable-queue", durable: true, exclusive: false, autoDelete: false, arguments: null);
+         channel.QueueDeclare(queue: "sample-durable-queue", durable: true, exclusive: false, autoDelete: false, arguments: null);
 
          channel.BasicQos(prefetchSize: 0, prefetchCount: 1, global: false);
 
@@ -25,19 +25,19 @@ namespace RabbitSamples.Ack.Consumer
 
          var consumer = new EventingBasicConsumer(channel);
 
-         consumer.Received += (model, ea) =>
+         consumer.Received += (model, message) =>
          {
-            ReadOnlyMemory<byte> body = ea.Body;
-            string message = Encoding.UTF8.GetString(body.Span);
+            ReadOnlyMemory<byte> body = message.Body;
+            string messageText = Encoding.UTF8.GetString(body.Span);
 
             Thread.Sleep(2500);
 
-            Console.WriteLine("--- Message received: {0}", message);
+            Console.WriteLine("--- Message received: {0}", messageText);
 
-            channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);
+            channel.BasicAck(deliveryTag: message.DeliveryTag, multiple: false);
          };
 
-         channel.BasicConsume(queue: "durable-queue", autoAck: false, consumer);
+         channel.BasicConsume(queue: "sample-durable-queue", autoAck: false, consumer);
 
          Console.WriteLine("--- Waiting for messages ...");
          Console.Read();

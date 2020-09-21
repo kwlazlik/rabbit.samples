@@ -4,9 +4,9 @@ using System.Text;
 using System.Threading.Tasks;
 using RabbitMQ.Client;
 
-namespace RabbitSamples.Topic.Producer
+namespace RabbitSamples.Headers.Producer
 {
-   internal static class TopicProducer
+   internal static class HeadersProducer
    {
       public static async Task Main()
       {
@@ -15,15 +15,23 @@ namespace RabbitSamples.Topic.Producer
          using var connection = factory.CreateConnection();
          using var channel = connection.CreateModel();
 
-         channel.ExchangeDeclare("sample-topic-exchange", ExchangeType.Topic, false, false, null);
+         channel.ExchangeDeclare("sample-headers-exchange", ExchangeType.Headers, false, false, null);
 
          while (true)
          {
-            (string messageText, string key) = PickMessageAndKey(); // ("red sweet apple", "red.sweet.apple")
+            (string fruit, string color) = PickFruitAndColor();
 
+            var messageText = $"{color} {fruit}";
             var body = Encoding.UTF8.GetBytes(messageText);
 
-            channel.BasicPublish("sample-topic-exchange", key, null, body);
+            IBasicProperties properties = channel.CreateBasicProperties();
+            properties.Headers = new Dictionary<string, object>
+            {
+               {"fruit", fruit},
+               {"color", color}
+            };
+
+            channel.BasicPublish("sample-headers-exchange", "", properties, body);
 
             Console.WriteLine("--- Message sent: {0}", messageText);
 
@@ -35,8 +43,14 @@ namespace RabbitSamples.Topic.Producer
 
       private static T Pick<T>(this IReadOnlyList<T> list) => list[Random.Next(list.Count)];
 
-      private static (string, string) PickMessageAndKey()
+      private static (string, string) PickFruitAndColor()
       {
+         string[] fruits =
+         {
+            "apple",
+            "cherry",
+            "strawberry"
+         };
          string[] colors =
          {
             "red",
@@ -44,24 +58,7 @@ namespace RabbitSamples.Topic.Producer
             "yellow"
          };
 
-         string[] taste =
-         {
-            "sweet",
-            "spicy"
-         };
-
-         string[] vegetables =
-         {
-            "carrot",
-            "tomato",
-            "pepper"
-         };
-
-         var key = $"{colors.Pick()}.{taste.Pick()}.{vegetables.Pick()}";
-
-         var messageText = $"{key.Replace('.', ' ')} {DateTime.Now:HH:mm:ss.fff}";
-
-         return (messageText, key);
+         return (fruits.Pick(), colors.Pick());
       }
    }
 }

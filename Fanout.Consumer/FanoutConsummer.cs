@@ -9,7 +9,14 @@ namespace RabbitSamples.Fanout.Consumer
    {
       public static void Main()
       {
-         var factory = new ConnectionFactory();
+         var factory = new ConnectionFactory
+         {
+            UserName = ConnectionFactory.DefaultUser,
+            Password = ConnectionFactory.DefaultPass,
+            VirtualHost = ConnectionFactory.DefaultVHost,
+            HostName = "localhost",
+            Port = AmqpTcpEndpoint.UseDefaultPort
+         };
 
          using IConnection connection = factory.CreateConnection();
          using IModel channel = connection.CreateModel();
@@ -17,20 +24,18 @@ namespace RabbitSamples.Fanout.Consumer
          channel.ExchangeDeclare(exchange: "sample-fanout-exchange", type: ExchangeType.Fanout);
 
          string queueName = channel.QueueDeclare().QueueName;
-         channel.QueueBind(queue: queueName, exchange: "sample-fanout-exchange", routingKey: "");
+         channel.QueueBind(queue: queueName, exchange: "sample-fanout-exchange", routingKey: "", arguments: null);
 
          var consumer = new EventingBasicConsumer(channel);
-         consumer.Received += (model, ea) =>
+         consumer.Received += (model, message) =>
          {
-            byte[] body = ea.Body.ToArray();
-            string message = Encoding.UTF8.GetString(body);
+            byte[] body = message.Body.ToArray();
+            string messageText = Encoding.UTF8.GetString(body);
 
-            Console.WriteLine("--- Message received: {0}", message);
-
-            channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);
+            Console.WriteLine("--- Message received: {0}", messageText);
          };
 
-         channel.BasicConsume(queue: queueName, autoAck: false, consumer: consumer);
+         channel.BasicConsume(queue: queueName, autoAck: true, consumer: consumer);
 
          Console.WriteLine("--- Waiting for messages ...");
          Console.Read();

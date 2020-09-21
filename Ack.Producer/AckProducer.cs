@@ -14,22 +14,21 @@ namespace RabbitSamples.Ack.Producer
          var factory = new ConnectionFactory();
 
          using IConnection connection = factory.CreateConnection();
-
          using IModel channel = connection.CreateModel();
 
-         channel.QueueDeclare(queue: "durable-queue", durable: true, exclusive: false, autoDelete: false, arguments: null);
+         channel.QueueDeclare(queue: "sample-durable-queue", durable: true, exclusive: false, autoDelete: false, arguments: null);
 
          IBasicProperties properties = channel.CreateBasicProperties();
          properties.Persistent = true;
 
          while (true)
          {
-            string message = PickMessage();
-            byte[] body = Encoding.UTF8.GetBytes(s: message);
+            string messageText = PickMessage();
+            byte[] body = Encoding.UTF8.GetBytes(s: messageText);
 
-            channel.BasicPublish(exchange: "", routingKey: "durable-queue", basicProperties: properties, body: body);
+            channel.BasicPublish(exchange: "", routingKey: "sample-durable-queue", basicProperties: properties, body: body);
 
-            Console.WriteLine("--- Message sent: {0}", message);
+            Console.WriteLine("--- Message sent: {0}", messageText);
 
             await Task.Delay(3000);
          }

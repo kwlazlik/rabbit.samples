@@ -10,7 +10,14 @@ namespace RabbitSamples.Fanout.Producer
    {
       public static async Task Main(string[] args)
       {
-         var factory = new ConnectionFactory();
+         var factory = new ConnectionFactory
+         {
+            UserName = ConnectionFactory.DefaultUser,
+            Password = ConnectionFactory.DefaultPass,
+            VirtualHost = ConnectionFactory.DefaultVHost,
+            HostName = "localhost",
+            Port = AmqpTcpEndpoint.UseDefaultPort
+         };
 
          using IConnection connection = factory.CreateConnection();
          using IModel channel = connection.CreateModel();
@@ -19,12 +26,12 @@ namespace RabbitSamples.Fanout.Producer
 
          while (true)
          {
-            string message = PickMessage();
-            var body = Encoding.UTF8.GetBytes(message);
+            string messageText = PickMessage();
+            byte[] body = Encoding.UTF8.GetBytes(messageText);
 
             channel.BasicPublish(exchange: "sample-fanout-exchange", routingKey: "", basicProperties: null, body: body);
 
-            Console.WriteLine($"--- Message sent: {message}");
+            Console.WriteLine($"--- Message sent: {messageText}");
 
             await Task.Delay(3000);
          }
